@@ -357,13 +357,12 @@ class CashAddress {
 		return $ret;
 	}
 
-	// Code Part 2: New To Old Conversion
-
-	static public function new2old($inputNew)
-	{
+	static public function decodeNewAddr($inputNew, $shouldFixErrors) {
 		$inputNew = strtolower($inputNew);
-
-		if (substr($inputNew, 0, 12) !== "bitcoincash:")
+		if (strpos($inputNew, ":") === false) {
+			$inputNew = "bitcoincash:" . $inputNew;
+		}
+		else if (substr($inputNew, 0, 12) !== "bitcoincash:")
 		{
 			throw new CashAddressException('Error');
 		}
@@ -386,34 +385,67 @@ class CashAddress {
 		{
 			// Checksum is wrong!
 			// Try to fix up to two errors
+			if ($shouldFixErrors) {
+				$syndromes = Array();
 
-			$syndromes = Array();
-
-			for ($p = 0; $p < sizeof($data); $p++)
-			{
-				for ($e = 1; $e < 32; $e++)
+				for ($p = 0; $p < sizeof($data); $p++)
 				{
-					$data[$p] ^= $e;
-					$c        = self::polyMod($data);
-					if ($c == 0)
+					for ($e = 1; $e < 32; $e++)
 					{
+						$data[$p] ^= $e;
+						$c        = self::polyMod($data);
+						if ($c == 0)
+						{
+							return self::rebuildAddress($data);
+						}
+						$syndromes[$c ^ $checksum] = $p * 32 + $e;
+						$data[$p]                  ^= $e;
+					}
+				}
+
+				foreach ($syndromes as $s0 => $pe)
+				{
+					if (array_key_exists($s0 ^ $checksum, $syndromes))
+					{
+						$data[intdiv($pe, 32)]                         ^= $pe % 32;
+						$data[intdiv($syndromes[$s0 ^ $checksum], 32)] ^= $syndromes[$s0 ^ $checksum] % 32;
 						return self::rebuildAddress($data);
 					}
-					$syndromes[$c ^ $checksum] = $p * 32 + $e;
-					$data[$p]                  ^= $e;
 				}
+				// Can't correct errors!
+				throw new CashAddressException('Error');
 			}
+		}
+		return $values;
+	}
 
-			foreach ($syndromes as $s0 => $pe)
-			{
-				if (array_key_exists($s0 ^ $checksum, $syndromes))
-				{
-					$data[intdiv($pe, 32)]                         ^= $pe % 32;
-					$data[intdiv($syndromes[$s0 ^ $checksum], 32)] ^= $syndromes[$s0 ^ $checksum] % 32;
-					return self::rebuildAddress($data);
-				}
+	static public function fixCashAddrErrors($inputNew) {
+		try {
+			$corrected = self::decodeNewAddr($inputNew, true);
+			if (gettype($corrected) === "array") {
+				return $inputNew;
+			} else {
+				return $corrected;
 			}
-			// Can't correct errors!
+		}
+		catch(Exception $e) {
+			return "";
+		}
+	}
+
+	// Code Part 2: New To Old Conversion
+
+	static public function new2old($inputNew, $shouldFixErrors)
+	{
+		try {
+			$corrected = self::decodeNewAddr($inputNew, $shouldFixErrors);
+			if (gettype($corrected) === "array") {
+				$values = $corrected;
+			} else {
+				$values = self::decodeNewAddr($corrected, false);
+			}
+		}
+		catch(Exception $e) {
 			throw new CashAddressException('Error');
 		}
 
