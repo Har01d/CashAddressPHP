@@ -134,7 +134,14 @@ class CashAddress {
 			throw new CashAddressException('Run it on a x64 system (+ 64 bit PHP)');
 		}
 	}
-
+	/**
+	 * convertBits is the internal function to convert 256-based bytes
+	 * to base-32 grouped bit arrays and vice versa.
+	 * @param array $data Data whose bits to be re-grouped
+	 * @param integer $fromBits Bits per input group of the $data
+	 * @param integer $toBits Bits to be put to each output group
+	 * @param boolean $pad Whether to add extra zeroes
+	 */
 	static private function convertBits(array $data, $fromBits, $toBits, $pad = true)
 	{
 		$acc    = 0;
@@ -182,6 +189,11 @@ class CashAddress {
 		return $ret;
 	}
 
+	/**
+	* polyMod is the internal function create BCH codes.
+	* @param array $var 5-bit grouped data array whose polyMod to be calculated.
+	* @return integer $polymodValue polymod result
+	*/
 	static private function polyMod($var)
 	{
 		$c = gmp_init(1);
@@ -217,27 +229,39 @@ class CashAddress {
 		return intval(gmp_strval(gmp_xor($c, "1")));
 	}
 
-	static private function rebuildAddress($bytes)
+	/**
+	* rebuildAddress is the internal function to recreate error
+	* corrected addresses.
+	* @param array $addressBytes
+	* @return string $correctedAddress
+	*/
+	static private function rebuildAddress($addressBytes)
 	{
 		$ret = "";
 		$i   = 0;
 
-		while ($bytes[$i] != 0)
+		while ($addressBytes[$i] != 0)
 		{
-			$ret .= chr(self::t + $bytes[$i]);
+			$ret .= chr(self::t + $addressBytes[$i]);
 			$i++;
 		}
 
 		$ret .= ':';
 
-		for ($i++; $i < sizeof($bytes); $i++)
+		for ($i++; $i < sizeof($addressBytes); $i++)
 		{
-			$ret .= self::CHARSET[$bytes[$i]];
+			$ret .= self::CHARSET[$addressBytes[$i]];
 		}
 
 		return $ret;
 	}
 
+	/**
+	* old2new converts an address in old format to the new Cash Address format.
+	* @param string $oldAddress (either Mainnet or Testnet)
+	* @return string $newAddress Cash Address result
+	* @throws CashAddressException
+	*/
 	static public function old2new($oldAddress)
 	{
 		$bytes = [0];
@@ -371,6 +395,17 @@ class CashAddress {
 		return $ret;
 	}
 
+	/**
+	 * Decodes Cash Address.
+	 * @param string $inputNew New address to be decoded.
+	 * @param boolean $shouldFixErrors Whether to fix typing errors.
+	 * @param boolean &$isTestnetAddressResult Is pointer, set to whether it's
+	 * a testnet address.
+	 * @return array $decoded Returns decoded byte array if it can be decoded.
+	 * @return string $correctedAddress Returns the corrected address if there's
+	 * a typing error.
+	 * @throws CashAddressException
+	 */
 	static public function decodeNewAddr($inputNew, $shouldFixErrors, &$isTestnetAddressResult) {
 		$inputNew = strtolower($inputNew);
 		if (strpos($inputNew, ":") === false) {
@@ -447,6 +482,13 @@ class CashAddress {
 		return $values;
 	}
 
+	/**
+	 * Corrects Cash Address typing errors.
+	 * @param string $inputNew Cash Address to be corrected.
+	 * @return $correctedAddress Error corrected address, or the input itself
+	 * if there are no errors.
+	 * @throws CashAddressException
+	 */
 	static public function fixCashAddrErrors($inputNew) {
 		try {
 			$corrected = self::decodeNewAddr($inputNew, true, $isTestnet);
@@ -456,13 +498,19 @@ class CashAddress {
 				return $corrected;
 			}
 		}
-		catch(Exception $e) {
-			return "";
+		catch(CashAddressException $e) {
+			throw $e;
 		}
 	}
 
-	// Code Part 2: New To Old Conversion
 
+	/**
+	* new2old converts an address in the Cash Address format to the old format.
+	* @param string $inputNew Cash Address (either mainnet or testnet)
+	* @param boolean $shouldFixErrors Whether to fix typing errors.
+	* @return string $oldAddress Old style 1... or 3... address
+	* @throws CashAddressException
+	*/
 	static public function new2old($inputNew, $shouldFixErrors)
 	{
 		try {
