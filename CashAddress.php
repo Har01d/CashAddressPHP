@@ -288,7 +288,6 @@ class CashAddress {
 
 		// Assume the checksum of the old address is right
 		// Here, the Cash Address conversion starts
-		// DEBUG
 		if ($version == 0x00)
 		{
 			// P2PKH
