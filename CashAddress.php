@@ -196,37 +196,35 @@ class CashAddress {
 	*/
 	static private function polyMod($var)
 	{
-		$c = gmp_init(1);
+		$c = 1;
 
 		for ($i = 0; $i < sizeof($var); $i++)
 		{
-			// $c0 = uRShift($c, 35);
-			$c0 = gmp_div_q($c, "34359738368", GMP_ROUND_MINUSINF);
-			// $c = (($c & 0x07ffffffff) << 5) ^ $var[$i];
-			$c = gmp_xor(gmp_mul(gmp_and($c, "0x07ffffffff"), "32"), gmp_init($var[$i]));
-			if (gmp_strval(gmp_mod($c0, "2")) != "0")
+			$c0 = $c >> 35;
+			$c = (($c & 0x07ffffffff) << 5) ^ $var[$i];
+			if ($c0 & 1)
 			{
-				$c = gmp_xor($c, "0x98f2bc8e61");
+				$c ^= 0x98f2bc8e61;
 			}
-			if (gmp_strval(gmp_div_q(gmp_mod($c0, "4"), "2", GMP_ROUND_MINUSINF)) != "0")
+			if ($c0 & 2)
 			{
-				$c = gmp_xor($c, "0x79b76d99e2");
+				$c ^= 0x79b76d99e2;
 			}
-			if (gmp_strval(gmp_div_q(gmp_mod($c0, "8"), "4", GMP_ROUND_MINUSINF)) != "0")
+			if ($c0 & 4)
 			{
-				$c = gmp_xor($c, "0xf33e5fb3c4");
+				$c ^= 0xf33e5fb3c4;
 			}
-			if (gmp_strval(gmp_div_q(gmp_mod($c0, "16"), "8", GMP_ROUND_MINUSINF)) != "0")
+			if ($c0 & 8)
 			{
-				$c = gmp_xor($c, "0xae2eabe2a8");
+				$c ^= 0xae2eabe2a8;
 			}
-			if (gmp_strval(gmp_div_q(gmp_mod($c0, "32"), "16", GMP_ROUND_MINUSINF)) != "0")
+			if ($c0 & 16)
 			{
-				$c = gmp_xor($c, "0x1e4f43e470");
+				$c ^= 0x1e4f43e470;
 			}
 		}
 
-		return intval(gmp_strval(gmp_xor($c, "1")));
+		return $c ^ 1;
 	}
 
 	/**

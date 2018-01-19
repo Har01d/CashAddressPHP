@@ -49,3 +49,10 @@ echo "Old testnet ({$testnetp2pkh}) to new: " . ($r = \CashAddress\CashAddress::
 echo "New ({$r}) to old: " . ($r = \CashAddress\CashAddress::new2old($r, false)) . "\n";
 assert(($testnetp2pkh == $r), 'Whoops');
 echo "Ok. \n\n";
+
+echo "\nTest Testnet P2SH addresses\n\n";
+
+echo "Old testnet ({$testnetp2sh}) to new: " . ($r = \CashAddress\CashAddress::old2new($testnetp2sh)) . "\n";
+echo "New ({$r}) to old: " . ($r = \CashAddress\CashAddress::new2old($r, false)) . "\n";
+assert(($testnetp2sh == $r), 'Whoops');
+echo "Ok. \n\n";
