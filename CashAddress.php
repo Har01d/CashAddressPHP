@@ -105,27 +105,34 @@ class CashAddressException extends \Exception {
 
 class CashAddress {
 
-	const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-	const CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
-	const ALPHABET_MAP = ["1" => 0, "2" => 1, "3" => 2, "4" => 3, "5" => 4, "6" => 5, "7" => 6,
-  					  "8" => 7, "9" => 8, "A" => 9, "B" => 10, "C" => 11, "D" => 12, "E" => 13, "F" => 14, "G" => 15,
-  					  "H" => 16, "J" => 17, "K" => 18, "L" => 19, "M" => 20, "N" => 21, "P" => 22, "Q" => 23, "R" => 24,
-  					  "S" => 25, "T" => 26, "U" => 27, "V" => 28, "W" => 29, "X" => 30, "Y" => 31, "Z" => 32, "a" => 33,
-  					  "b" => 34, "c" => 35, "d" => 36, "e" => 37, "f" => 38, "g" => 39, "h" => 40, "i" => 41, "j" => 42,
-  					  "k" => 43, "m" => 44, "n" => 45, "o" => 46, "p" => 47, "q" => 48, "r" => 49, "s" => 50, "t" => 51,
-						  "u" => 52, "v" => 53, "w" => 54, "x" => 55, "y" => 56, "z" => 57];
-	const BECH_ALPHABET = ["q" => 0, "p" => 1,
-						  "z" => 2, "r" => 3, "y" => 4, "9" => 5, "x" => 6, "8" => 7,
-						  "g" => 8, "f" => 9, "2" => 10, "t" => 11, "v" => 12, "d" => 13,
-						  "w" => 14, "0" => 15, "s" => 16, "3" => 17, "j" => 18, "n" => 19,
-						  "5" => 20, "4" => 21, "k" => 22, "h" => 23, "c" => 24, "e" => 25,
-						  "6" => 26, "m" => 27, "u" => 28, "a" => 29, "7" => 30, "l" => 31];
-	const EXPAND_PREFIX = [2, 9, 20, 3, 15, 9, 14, 3, 1, 19, 8, 0];
-	const EXPAND_PREFIX_TESTNET = [2, 3, 8, 20, 5, 19, 20, 0];
-	const BASE16 = ["0" => 0, "1" => 1, "2" => 2, "3" => 3,
-						  "4" => 4, "5" => 5, "6" => 6, "7" => 7,
-							"8" => 8, "9" => 9, "a" => 10, "b" => 11,
-							"c" => 12, "d" => 13, "e" => 14, "f" => 15];
+	const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+	const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+	const ALPHABET_MAP =
+  					  [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  					  -1,  0,  1,  2,  3,  4,  5,  6,  7,  8, -1, -1, -1, -1, -1, -1,
+  					  -1,  9, 10, 11, 12, 13, 14, 15, 16, -1, 17, 18, 19, 20, 21, -1,
+  					  22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, -1, -1, -1, -1, -1,
+  					  -1, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, -1, 44, 45, 46,
+  					  47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, -1, -1, -1, -1, -1];
+	const BECH_ALPHABET =
+  					  [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  					  15, -1, 10, 17, 21, 20, 26, 30,  7,  5, -1, -1, -1, -1, -1, -1,
+  					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  					  -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
+  					  1, 0, 3, 16, 11, 28, 12, 14, 6, 4, 2, -1, -1, -1, -1, -1];
+	const EXPAND_PREFIX_UNPROCESSED = [2, 9, 20, 3, 15, 9, 14, 3, 1, 19, 8, 0];
+	const EXPAND_PREFIX_TESTNET_UNPROCESSED = [2, 3, 8, 20, 5, 19, 20, 0];
+	const EXPAND_PREFIX = 1058337025301;
+	const EXPAND_PREFIX_TESTNET = 584719417569;
+	const BASE16 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, -1,
+						  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+							-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12,
+							13, 14, 15];
 
 	public function __construct()
 	{
@@ -153,13 +160,14 @@ class CashAddress {
 		$maxv   = (1 << $toBits) - 1;
 		$maxacc = (1 << ($fromBits + $toBits - 1)) - 1;
 
-		for ($i = 0; $i < sizeof($data); $i++)
+		$datalen = sizeof($data);
+		for ($i = 0; $i < $datalen; $i++)
 		{
 			$value = $data[$i];
 
-			if ($value < 0 || $value >> $fromBits != 0)
+			if ($value < 0 || $value >> $fromBits !== 0)
 			{
-				throw new CashAddressException("Error!");
+				throw new CashAddressException('Error!');
 			}
 
 			$acc  = (($acc << $fromBits) | $value) & $maxacc;
@@ -181,7 +189,7 @@ class CashAddress {
 		}
 		else if ($bits >= $fromBits || ((($acc << ($toBits - $bits))) & $maxv))
 		{
-			throw new CashAddressException("Error!");
+			throw new CashAddressException('Error!');
 		}
 
 		return $ret;
@@ -190,36 +198,22 @@ class CashAddress {
 	/**
 	* polyMod is the internal function create BCH codes.
 	* @param  array $var 5-bit grouped data array whose polyMod to be calculated.
+	* @param  integer c Starting value, 1 if the prefix is appended to the array.
 	* @return integer $polymodValue polymod result
 	*/
-	static private function polyMod($var)
+	static private function polyMod($var, $c = 1)
 	{
-		$c = 1;
-
-		for ($i = 0; $i < sizeof($var); $i++)
+		$varlen = sizeof($var);;
+		for ($i = 0; $i < $varlen; $i++)
 		{
 			$c0 = $c >> 35;
-			$c = (($c & 0x07ffffffff) << 5) ^ $var[$i];
-			if ($c0 & 1)
-			{
-				$c ^= 0x98f2bc8e61;
-			}
-			if ($c0 & 2)
-			{
-				$c ^= 0x79b76d99e2;
-			}
-			if ($c0 & 4)
-			{
-				$c ^= 0xf33e5fb3c4;
-			}
-			if ($c0 & 8)
-			{
-				$c ^= 0xae2eabe2a8;
-			}
-			if ($c0 & 16)
-			{
-				$c ^= 0x1e4f43e470;
-			}
+			$c = (($c & 0x07ffffffff) << 5) ^
+			($var[$i]) ^
+			(-($c0 & 1) & 0x98f2bc8e61) ^
+			(-($c0 & 2) & 0x79b76d99e2) ^
+			(-($c0 & 4) & 0xf33e5fb3c4) ^
+			(-($c0 & 8) & 0xae2eabe2a8) ^
+			(-($c0 & 16) & 0x1e4f43e470);
 		}
 
 		return $c ^ 1;
@@ -233,10 +227,10 @@ class CashAddress {
 	*/
 	static private function rebuildAddress($addressBytes)
 	{
-		$ret = "";
+		$ret = '';
 		$i   = 0;
 
-		while ($addressBytes[$i] != 0)
+		while ($addressBytes[$i] !== 0)
 		{
 			// 96 = ord('a') & 0xe0
 			$ret .= chr(96 + $addressBytes[$i]);
@@ -244,8 +238,8 @@ class CashAddress {
 		}
 
 		$ret .= ':';
-
-		for ($i++; $i < sizeof($addressBytes); $i++)
+		$len = sizeof($addressBytes);
+		for ($i++; $i < $len; $i++)
 		{
 			$ret .= self::CHARSET[$addressBytes[$i]];
 		}
@@ -265,29 +259,28 @@ class CashAddress {
 
 		for ($x = 0; $x < strlen($oldAddress); $x++)
 		{
-			if (!array_key_exists($oldAddress[$x], self::ALPHABET_MAP))
+			$carry = ord($oldAddress[$x]);
+			if ($carry > 127 || ((($carry = self::ALPHABET_MAP[$carry]) === -1)))
 			{
 				throw new CashAddressException('Unexpected character in address!');
 			}
 
-			$value = self::ALPHABET_MAP[$oldAddress[$x]];
-			$carry = $value;
-
-			for ($j = 0; $j < sizeof($bytes); $j++)
+			$bytes_len = sizeof($bytes);
+			for ($j = 0; $j < $bytes_len; $j++)
 			{
 				$carry     += $bytes[$j] * 58;
 				$bytes[$j] = $carry & 0xff;
 				$carry     >>= 8;
 			}
 
-			while ($carry > 0)
+			while ($carry !== 0)
 			{
 				array_push($bytes, $carry & 0xff);
 				$carry >>= 8;
 			}
 		}
 
-		for ($numZeros = 0; $numZeros < strlen($oldAddress) && $oldAddress[$numZeros] === "1"; $numZeros++)
+		for ($numZeros = 0; $numZeros < strlen($oldAddress) && $oldAddress[$numZeros] === '1'; $numZeros++)
 		{
 			array_push($bytes, 0);
 		}
@@ -303,44 +296,44 @@ class CashAddress {
 		$version = $answer[0];
 		$payload = array_slice($answer, 1, sizeof($answer) - 5);
 
-		if (sizeof($payload) % 4 != 0)
+		if (sizeof($payload) % 4 !== 0)
 		{
 			throw new CashAddressException('Unexpected address length!');
 		}
 
 		// Assume the checksum of the old address is right
 		// Here, the Cash Address conversion starts
-		if ($version == 0x00)
+		if ($version === 0x00)
 		{
 			// P2PKH
 			$addressType = 0;
 			$realNet = true;
 		}
-		else if ($version == 0x05)
+		else if ($version === 0x05)
 		{
 			// P2SH
 			$addressType = 1;
 			$realNet = true;
 		}
-		else if ($version == 0x6f)
+		else if ($version === 0x6f)
 		{
 			// Testnet P2PKH
 			$addressType = 0;
 			$realNet = false;
 		}
-		else if ($version == 0xc4)
+		else if ($version === 0xc4)
 		{
 			// Testnet P2SH
 			$addressType = 1;
 			$realNet = false;
 		}
-		else if ($version == 0x1c)
+		else if ($version === 0x1c)
 		{
 			// BitPay P2PKH
 			$addressType = 0;
 			$realNet = true;
 		}
-		else if ($version == 0x28)
+		else if ($version === 0x28)
 		{
 			// BitPay P2SH
 			$addressType = 1;
@@ -356,15 +349,15 @@ class CashAddress {
 		$versionByte      = ($addressType << 3) | $encodedSize;
 		$data             = array_merge([$versionByte], $payload);
 		$payloadConverted = self::convertBits($data, 8, 5, true);
-
+		$arr              = array_merge($payloadConverted, [0, 0, 0, 0, 0, 0, 0, 0]);
 		if ($realNet) {
-			$arr = array_merge(self::EXPAND_PREFIX, $payloadConverted, [0, 0, 0, 0, 0, 0, 0, 0]);
-			$ret = "bitcoincash:";
+			$expand_prefix = self::EXPAND_PREFIX;
+			$ret = 'bitcoincash:';
 		} else {
-			$arr = array_merge(self::EXPAND_PREFIX_TESTNET, $payloadConverted, [0, 0, 0, 0, 0, 0, 0, 0]);
-			$ret = "bchtest:";
+			$expand_prefix = self::EXPAND_PREFIX_TESTNET;
+			$ret = 'bchtest:';
 		}
-		$mod          = self::polymod($arr);
+		$mod          = self::polymod($arr, $expand_prefix);
 		$checksum     = [0, 0, 0, 0, 0, 0, 0, 0];
 
 		for ($i = 0; $i < 8; $i++)
@@ -374,9 +367,9 @@ class CashAddress {
 			$checksum[$i] = ($mod >> (5 * (7 - $i))) & 0x1f;
 		}
 
-		$combined = array_merge($payloadConverted, $checksum);
-
-		for ($i = 0; $i < sizeof($combined); $i++)
+		$combined     = array_merge($payloadConverted, $checksum);
+		$combined_len = sizeof($combined);
+		for ($i = 0; $i < $combined_len; $i++)
 		{
 			$ret .= self::CHARSET[$combined[$i]];
 		}
@@ -397,21 +390,21 @@ class CashAddress {
 	 */
 	static public function decodeNewAddr($inputNew, $shouldFixErrors, &$isTestnetAddressResult) {
 		$inputNew = strtolower($inputNew);
-		if (strpos($inputNew, ":") === false) {
+		if (strpos($inputNew, ':') === false) {
 			$afterPrefix = 0;
-			$data = self::EXPAND_PREFIX;
+			$expand_prefix = self::EXPAND_PREFIX;
 			$isTestnetAddressResult = false;
 		}
-		else if (substr($inputNew, 0, 12) === "bitcoincash:")
+		else if (substr($inputNew, 0, 12) === 'bitcoincash:')
 		{
 			$afterPrefix = 12;
-			$data = self::EXPAND_PREFIX;
+			$expand_prefix = self::EXPAND_PREFIX;
 			$isTestnetAddressResult = false;
 		}
-		else if (substr($inputNew, 0, 8) === "bchtest:")
+		else if (substr($inputNew, 0, 8) === 'bchtest:')
 		{
 			$afterPrefix = 8;
-			$data = self::EXPAND_PREFIX_TESTNET;
+			$expand_prefix = self::EXPAND_PREFIX_TESTNET;
 			$isTestnetAddressResult = true;
 		}
 		else
@@ -419,34 +412,41 @@ class CashAddress {
 			throw new CashAddressException('Unknown address type');
 		}
 
-		for ($values = []; $afterPrefix < strlen($inputNew); $afterPrefix++)
+		$data = [];
+		$len  = strlen($inputNew);
+		for (; $afterPrefix < $len; $afterPrefix++)
 		{
-			if (!array_key_exists($inputNew[$afterPrefix], self::BECH_ALPHABET))
+			$i = ord($inputNew[$afterPrefix]);
+			if ($i > 127 || (($i = self::BECH_ALPHABET[$i]) === -1))
 			{
 				throw new CashAddressException('Unexpected character in address!');
 			}
-			array_push($values, self::BECH_ALPHABET[$inputNew[$afterPrefix]]);
+			array_push($data, $i);
 		}
 
-		$data     = array_merge($data, $values);
-		$checksum = self::polyMod($data);
+		$checksum = self::polyMod($data, $expand_prefix);
 
-		if ($checksum != 0)
+		if ($checksum !== 0)
 		{
+			if ($expand_prefix === self::EXPAND_PREFIX_TESTNET) {
+				$unexpand_prefix = self::EXPAND_PREFIX_TESTNET_UNPROCESSED;
+			} else {
+				$unexpand_prefix = self::EXPAND_PREFIX_UNPROCESSED;
+			}
 			// Checksum is wrong!
 			// Try to fix up to two errors
 			if ($shouldFixErrors) {
 				$syndromes = Array();
-
-				for ($p = 0; $p < sizeof($data); $p++)
+				$datalen = sizeof($data);
+				for ($p = 0; $p < $datalen; $p++)
 				{
 					for ($e = 1; $e < 32; $e++)
 					{
 						$data[$p] ^= $e;
-						$c        = self::polyMod($data);
-						if ($c == 0)
+						$c        = self::polyMod($data, $expand_prefix);
+						if ($c === 0)
 						{
-							return self::rebuildAddress($data);
+							return self::rebuildAddress(array_merge($unexpand_prefix, $data));
 						}
 						$syndromes[$c ^ $checksum] = $p * 32 + $e;
 						$data[$p]                  ^= $e;
@@ -459,14 +459,13 @@ class CashAddress {
 					{
 						$data[$pe >> 5]                         ^= $pe % 32;
 						$data[$syndromes[$s0 ^ $checksum] >> 5] ^= $syndromes[$s0 ^ $checksum] % 32;
-						return self::rebuildAddress($data);
+						return self::rebuildAddress(array_merge($unexpand_prefix, $data));
 					}
 				}
-				// Can't correct errors!
 				throw new CashAddressException('Can\'t correct typing errors!');
 			}
 		}
-		return $values;
+		return $data;
 	}
 
 	/**
@@ -479,7 +478,7 @@ class CashAddress {
 	static public function fixCashAddrErrors($inputNew) {
 		try {
 			$corrected = self::decodeNewAddr($inputNew, true, $isTestnet);
-			if (gettype($corrected) === "array") {
+			if (gettype($corrected) === 'array') {
 				return $inputNew;
 			} else {
 				return $corrected;
@@ -502,7 +501,7 @@ class CashAddress {
 	{
 		try {
 			$corrected = self::decodeNewAddr($inputNew, $shouldFixErrors, $isTestnet);
-			if (gettype($corrected) === "array") {
+			if (gettype($corrected) === 'array') {
 				$values = $corrected;
 			} else {
 				$values = self::decodeNewAddr($corrected, false, $isTestnet);
@@ -530,22 +529,22 @@ class CashAddress {
 				$bytes = [0x00];
 			}
 		}
-		$bytes  = array_merge($bytes, $addressHash);
-		$merged = array_merge($bytes, self::doubleSha256ByteArray($bytes));
-
-		$digits = [0];
-
-		for ($i = 0; $i < sizeof($merged); $i++)
+		$bytes      = array_merge($bytes, $addressHash);
+		$merged     = array_merge($bytes, self::doubleSha256ByteArray($bytes));
+		$digits     = [0];
+		$merged_len = sizeof($merged);
+		for ($i = 0; $i < $merged_len; $i++)
 		{
 			$carry = $merged[$i];
-			for ($j = 0; $j < sizeof($digits); $j++)
+			$digits_len = sizeof($digits);
+			for ($j = 0; $j < $digits_len; $j++)
 			{
 				$carry      += $digits[$j] << 8;
 				$digits[$j] = $carry % 58;
 				$carry      = intdiv($carry, 58);
 			}
 
-			while ($carry > 0)
+			while ($carry !== 0)
 			{
 				array_push($digits, $carry % 58);
 				$carry = intdiv($carry, 58);
@@ -553,13 +552,13 @@ class CashAddress {
 		}
 
 		// leading zero bytes
-		for ($i = 0; $i < sizeof($merged) && $merged[$i] === 0; $i++)
+		for ($i = 0; $i < $merged_len && $merged[$i] === 0; $i++)
 		{
 			array_push($digits, 0);
 		}
 
 		// reverse
-		$converted = "";
+		$converted = '';
 		for ($i = sizeof($digits) - 1; $i >= 0; $i--)
 		{
 			if ($digits[$i] > strlen(self::ALPHABET))
@@ -578,28 +577,29 @@ class CashAddress {
 	 * @return array $hashResult First four bytes of sha256 result
 	 */
 	private static function doubleSha256ByteArray($byteArray) {
-		$stringToBeHashed = "";
-		for ($i = 0; $i < sizeof($byteArray); $i++)
+		$stringToBeHashed = '';
+		$byteArrayLen = sizeof($byteArray);
+		for ($i = 0; $i < $byteArrayLen; $i++)
 		{
 			$stringToBeHashed .= chr($byteArray[$i]);
 		}
-		$hash = hash("sha256", $stringToBeHashed);
+		$hash = hash('sha256', $stringToBeHashed);
 		$hashArray = [];
 		for ($i = 0; $i < 32; $i++)
 		{
-			array_push($hashArray, self::BASE16[$hash[2 * $i]] * 16 + self::BASE16[$hash[2 * $i + 1]]);
+			array_push($hashArray, self::BASE16[ord($hash[2 * $i]) - 48] * 16 + self::BASE16[ord($hash[2 * $i + 1]) - 48]);
 		}
-		$stringToBeHashed = "";
-		for ($i = 0; $i < sizeof($hashArray); $i++)
+		$stringToBeHashed = '';
+		for ($i = 0; $i < 32; $i++)
 		{
 			$stringToBeHashed .= chr($hashArray[$i]);
 		}
 
 		$hashArray = [];
-		$hash      = hash("sha256", $stringToBeHashed);
+		$hash      = hash('sha256', $stringToBeHashed);
 		for ($i = 0; $i < 4; $i++)
 		{
-			array_push($hashArray, self::BASE16[$hash[2 * $i]] * 16 + self::BASE16[$hash[2 * $i + 1]]);
+			array_push($hashArray, self::BASE16[ord($hash[2 * $i]) - 48] * 16 + self::BASE16[ord($hash[2 * $i + 1]) - 48]);
 		}
 		return $hashArray;
 	}
