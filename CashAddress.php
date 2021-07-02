@@ -125,10 +125,12 @@ class CashAddress {
   					  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   					  -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
   					  1, 0, 3, 16, 11, 28, 12, 14, 6, 4, 2, -1, -1, -1, -1, -1];
-	const EXPAND_PREFIX_UNPROCESSED = [2, 9, 20, 3, 15, 9, 14, 3, 1, 19, 8, 0];
-	const EXPAND_PREFIX_TESTNET_UNPROCESSED = [2, 3, 8, 20, 5, 19, 20, 0];
-	const EXPAND_PREFIX = 1058337025301;
-	const EXPAND_PREFIX_TESTNET = 584719417569;
+	const BCH_EXPAND_PREFIX_UNPROCESSED = [2, 9, 20, 3, 15, 9, 14, 3, 1, 19, 8, 0];
+	const BCH_EXPAND_PREFIX_TESTNET_UNPROCESSED = [2, 3, 8, 20, 5, 19, 20, 0];
+	const BCH_EXPAND_PREFIX = 1058337025301;
+	const BCH_EXPAND_PREFIX_TESTNET = 584719417569;
+	const ECASH_EXPAND_PREFIX_UNPROCESSED = [5, 3, 1, 19, 8, 0];
+	const ECASH_EXPAND_PREFIX_TESTNET_UNPROCESSED = [5, 3, 20, 5, 19, 20, 0];
 	const BASE16 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, -1,
 						  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 							-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12,
@@ -351,10 +353,10 @@ class CashAddress {
 		$payloadConverted = self::convertBits($data, 8, 5, true);
 		$arr              = array_merge($payloadConverted, [0, 0, 0, 0, 0, 0, 0, 0]);
 		if ($realNet) {
-			$expand_prefix = self::EXPAND_PREFIX;
+			$expand_prefix = self::BCH_EXPAND_PREFIX;
 			$ret = 'bitcoincash:';
 		} else {
-			$expand_prefix = self::EXPAND_PREFIX_TESTNET;
+			$expand_prefix = self::BCH_EXPAND_PREFIX_TESTNET;
 			$ret = 'bchtest:';
 		}
 		$mod          = self::polymod($arr, $expand_prefix);
@@ -368,11 +370,7 @@ class CashAddress {
 		}
 
 		$combined     = array_merge($payloadConverted, $checksum);
-		$combined_len = sizeof($combined);
-		for ($i = 0; $i < $combined_len; $i++)
-		{
-			$ret .= self::CHARSET[$combined[$i]];
-		}
+		$ret .= self::bechEncode($combined);
 
 		return $ret;
 	}
@@ -392,19 +390,19 @@ class CashAddress {
 		$inputNew = strtolower($inputNew);
 		if (strpos($inputNew, ':') === false) {
 			$afterPrefix = 0;
-			$expand_prefix = self::EXPAND_PREFIX;
+			$expand_prefix = self::BCH_EXPAND_PREFIX;
 			$isTestnetAddressResult = false;
 		}
 		else if (substr($inputNew, 0, 12) === 'bitcoincash:')
 		{
 			$afterPrefix = 12;
-			$expand_prefix = self::EXPAND_PREFIX;
+			$expand_prefix = self::BCH_EXPAND_PREFIX;
 			$isTestnetAddressResult = false;
 		}
 		else if (substr($inputNew, 0, 8) === 'bchtest:')
 		{
 			$afterPrefix = 8;
-			$expand_prefix = self::EXPAND_PREFIX_TESTNET;
+			$expand_prefix = self::BCH_EXPAND_PREFIX_TESTNET;
 			$isTestnetAddressResult = true;
 		}
 		else
@@ -412,26 +410,16 @@ class CashAddress {
 			throw new CashAddressException('Unknown address type');
 		}
 
-		$data = [];
-		$len  = strlen($inputNew);
-		for (; $afterPrefix < $len; $afterPrefix++)
-		{
-			$i = ord($inputNew[$afterPrefix]);
-			if ($i > 127 || (($i = self::BECH_ALPHABET[$i]) === -1))
-			{
-				throw new CashAddressException('Unexpected character in address!');
-			}
-			array_push($data, $i);
-		}
+		$data = self::bechDecode(substr($inputNew, $afterPrefix));
 
 		$checksum = self::polyMod($data, $expand_prefix);
 
 		if ($checksum !== 0)
 		{
-			if ($expand_prefix === self::EXPAND_PREFIX_TESTNET) {
-				$unexpand_prefix = self::EXPAND_PREFIX_TESTNET_UNPROCESSED;
+			if ($expand_prefix === self::BCH_EXPAND_PREFIX_TESTNET) {
+				$unexpand_prefix = self::BCH_EXPAND_PREFIX_TESTNET_UNPROCESSED;
 			} else {
-				$unexpand_prefix = self::EXPAND_PREFIX_UNPROCESSED;
+				$unexpand_prefix = self::BCH_EXPAND_PREFIX_UNPROCESSED;
 			}
 			// Checksum is wrong!
 			// Try to fix up to two errors
@@ -602,6 +590,212 @@ class CashAddress {
 			array_push($hashArray, self::BASE16[ord($hash[2 * $i]) - 48] * 16 + self::BASE16[ord($hash[2 * $i + 1]) - 48]);
 		}
 		return $hashArray;
+	}
+
+	/**
+	 * Internal function to decode a Bech32 encoded address.
+	 * @param  string $address The address to be decoded
+	 * @return array $addressData The decoded address data
+	 */
+	private static function bechDecode($address) {
+		$addressData = [];
+		$len  = strlen($address);
+		for ($pos = 0; $pos < $len; $pos++)
+		{
+			$i = ord($address[$pos]);
+			if ($i > 127 || (($i = self::BECH_ALPHABET[$i]) === -1))
+			{
+				throw new CashAddressException('Unexpected character in address!');
+			}
+			array_push($addressData, $i);
+		}
+
+		return $addressData;
+	}
+
+	/**
+	 * Internal function to encode cash address data using Bech32 encoding.
+	 * @param array $addressData The address data to encode
+	 * @return string $address The encoded address
+	 */
+	private static function bechEncode($addressData) {
+		$address = '';
+		$data_len = sizeof($addressData);
+
+		for ($i = 0; $i < $data_len; $i++)
+		{
+			$address .= self::CHARSET[$addressData[$i]];
+		}
+
+		return $address;
+	}
+
+	/**
+	 * Internal function to check if the given prefix matches the address
+	 * @param  string $prefix The prefix to check the address against
+	 * @param  string $addressNoPrefix The address and checksum without the
+	 *         prefix
+	 * @return bool $prefixMatch True if the prefix matches the address
+	 */
+	private static function checkPrefix($prefixData, $addressNoPrefix) {
+		$addressData = self::bechDecode($addressNoPrefix);
+		return self::polymod(array_merge($prefixData, $addressData)) === 0;
+	}
+
+	/**
+	 * Attempt to retrieve the prefix from an address. Throws on failure.
+	 * @param  string $addressNoPrefix The address and checksum without the
+	 *         prefix
+	 * @return string $prefix The address prefix
+	 */
+	public static function getPrefix($addressNoPrefix)
+	{
+		$prefixDatas = [
+			'bitcoincash' => self::BCH_EXPAND_PREFIX_UNPROCESSED,
+			'ecash' => self::ECASH_EXPAND_PREFIX_UNPROCESSED,
+			'bchtest' => self::BCH_EXPAND_PREFIX_TESTNET_UNPROCESSED,
+			'ectest' => self::ECASH_EXPAND_PREFIX_TESTNET_UNPROCESSED,
+		];
+		foreach ($prefixDatas as $prefix => $prefixData)
+		{
+			if (self::checkPrefix($prefixData, $addressNoPrefix) === True)
+			{
+				return $prefix;
+			}
+		}
+
+		throw new CashAddressException('Cannot determine the prefix for the cash address: ' . $addressNoPrefix . '!');
+		return "unknown";
+	}
+
+	/**
+	 * Internal function to convert the output of the polymod computation to a
+	 * properly formatted cash address checksum.
+	 * @param  string $polymod The computed polymod value
+	 * @return array $checksum The properly formatted checksum
+	 */
+	private static function checksum($polymod)
+	{
+		$checksum     = [0, 0, 0, 0, 0, 0, 0, 0];
+
+		for ($i = 0; $i < 8; $i++)
+		{
+			// Convert the 5-bit groups in mod to checksum values.
+			// $checksum[$i] = ($mod >> 5*(7-$i)) & 0x1f;
+			$checksum[$i] = ($polymod >> (5 * (7 - $i))) & 0x1f;
+		}
+
+		return $checksum;
+	}
+
+	/**
+	 * Internal function to build a cash address from the prefix and address.
+	 * The address is expected to contain a checksum but might not match the
+	 * prefix. The checksum of the output address is recomputed to match the
+	 * given prefix.
+	 * @param  string $prefix The prefix to use for building the cash address
+	 * @param  array $prefixData The prefix formatted as the 5 lsb for each byte
+	 *                           plus a trailing 0
+	 * @param  string $addressNoPrefix The address and checksum without the
+	 *         prefix
+	 * @return string $address The new cash address
+	 */
+	private static function buildCashAddress($prefix, $prefixData, $addressNoPrefix)
+	{
+		$payload = self::bechDecode(substr($addressNoPrefix, 0, -8));
+
+		$mod = self::polymod(array_merge($prefixData, $payload, [0, 0, 0, 0, 0, 0, 0, 0]));
+
+		$addressData = array_merge($payload, self::checksum($mod));
+
+		return $prefix . ':' . self::bechEncode($addressData);
+	}
+
+	/**
+	 * Internal function to split a cash address parts. If the input address has
+	   no prefix, it is determined from the remaining of the address.
+	 * @param  string $address The cash address to split
+	 * @return array $parts An array containg the prefix and the address content
+	 */
+	static private function splitCashAddress($address)
+	{
+		$parts = explode(':', $address);
+
+		$addressNoPrefix = $parts[0];
+
+		if (count($parts) > 2)
+		{
+			throw new CashAddressException('Multiple \':\' characters in address!');
+		}
+		else if (count($parts) > 1)
+		{
+			$prefix = $parts[0];
+			$addressNoPrefix = $parts[1];
+		}
+		else
+		{
+			$prefix = self::getPrefix($address);
+		}
+
+		return array($prefix, $addressNoPrefix);
+	}
+
+	/**
+	 * Convert a Bitcoin Cash address to an eCash address
+	 * @param  string $address The Bitcoin Cash address to convert
+	 * @return string $eCash The eCash address
+	 */
+	public static function bch2xec($address)
+	{
+		list($inputPrefix, $addressNoPrefix) = self::splitCashAddress($address);
+
+		$prefix = "";
+		$unexpanded_prefix = [];
+		if ($inputPrefix === "bitcoincash")
+		{
+			$prefix = "ecash";
+			$unexpanded_prefix = self::ECASH_EXPAND_PREFIX_UNPROCESSED;
+		}
+		else if ($inputPrefix === "bchtest")
+		{
+			$prefix = "ectest";
+			$unexpanded_prefix = self::ECASH_EXPAND_PREFIX_TESTNET_UNPROCESSED;
+		}
+		else
+		{
+			throw new CashAddressException('Wrong prefix for bitcoincash address: ' . $inputPrefix . '!');
+		}
+
+		return self::buildCashAddress($prefix, $unexpanded_prefix, $addressNoPrefix);
+	}
+
+	/**
+	 * Convert an eCash address to a Bitcoin Cash address
+	 * @param  string $address The eCash address to convert
+	 * @return string $bch The Bitcoin Cash address
+	 */
+	public static function xec2bch($address)
+	{
+		list($inputPrefix, $addressNoPrefix) = self::splitCashAddress($address);
+
+		$prefix = "";
+		$unexpanded_prefix = [];
+		if ($inputPrefix === "ecash")
+		{
+			$prefix = "bitcoincash";
+			$unexpanded_prefix = self::BCH_EXPAND_PREFIX_UNPROCESSED;
+		}
+		else if ($inputPrefix === "ectest")
+		{
+			$prefix = "bchtest";
+			$unexpanded_prefix = self::BCH_EXPAND_PREFIX_TESTNET_UNPROCESSED;
+		}
+		else
+		{
+			throw new CashAddressException('Wrong prefix for eCash address: ' . $inputPrefix . '!');
+		}
+
+		return self::buildCashAddress($prefix, $unexpanded_prefix, $addressNoPrefix);
 	}
 }
 
